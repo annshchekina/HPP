@@ -14,7 +14,7 @@ double get_wall_seconds()
 int main()
 {
 	FILE *output;
-	output = fopen("perf_N_sqr.txt", "w");
+	output = fopen("perf_O3.txt", "w");
 	
 	char file_name[64];
 

@@ -7,6 +7,8 @@
 #include "file_operations/file_operations.h"
 #include "graphics/graphics.h"
 
+#define PERF_TEST	1
+
 const float circleRadius=0.0025, circleColor=0;
 const int windowWidth=800;	
 
@@ -100,6 +102,7 @@ void galsim(int N, char * filename, int nsteps, double delta_t, int graphics) {
 	free(buffer);
 }
 
+#if !PERF_TEST
 int main(int argc, char **argv)
 {
 	if (argc < 6) {	
@@ -117,3 +120,4 @@ int main(int argc, char **argv)
 	
 	return 0;
 }
+#endif

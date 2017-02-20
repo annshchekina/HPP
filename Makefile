@@ -1,4 +1,4 @@
-CFLAGS=-Wall -g
+CFLAGS=-Wall -O3 -g
 INCLUDES=-I/opt/X11/include
 LDFLAGS=-L/opt/X11/lib -lX11 -lm
 
@@ -26,4 +26,4 @@ perf_test.o: perf_test.c galsim.h
 	gcc $(CFLAGS) $(INCLUDES) -c perf_test.c 
 
 clean:
-	rm -f ./galsim ./compare *.o *.gal *.txt
+	rm -f ./galsim ./compare ./perf *.o *.gal 
