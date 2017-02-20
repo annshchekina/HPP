@@ -3,16 +3,9 @@
 #include <math.h>
 #include <string.h>
 #include <assert.h>
+#include "galsim.h"
 #include "file_operations/file_operations.h"
 #include "graphics/graphics.h"
-
-typedef struct {	
-	double x;
-	double y;
-	double m;
-	double vx;
-	double vy;
-} star;
 
 const float circleRadius=0.0025, circleColor=0;
 const int windowWidth=800;	
@@ -64,19 +57,7 @@ void keep_within_box(float* xA, float* yA) {
 	*yA = 0;
 }
 
-int main(int argc, char **argv) {
-	
-	if (argc < 6) {	
-		printf("Give 5 input args: \'N filename nsteps delta_t graphics\'\n");
-		exit(1);
-	}
-
-	int N = strtol(argv[1], NULL, 10);	
-	char* filename = argv[2];	// initial configuration 
-	int nsteps = strtol(argv[3], NULL, 10);	
-	double delta_t = atof(argv[4]);	
-	int graphics = strtol(argv[5], NULL, 10);	// 1 or 0 meaning graphics on/off
-    // printf("N: %d\nfilename: %s\nnsteps: %d\ndelta_t: %f\ngraphics: %d\n", N, filename, nsteps, delta_t, graphics);
+int galsim(int N, char * filename, int nsteps, double delta_t, int graphics) {
 	
 	double* buffer = malloc(5*N*sizeof(double));	// i/o 
 	read_doubles_from_file(5*N, buffer, filename);	
@@ -95,7 +76,7 @@ int main(int argc, char **argv) {
 	float L=1, W=1;	
 
 	if (graphics) {
-		InitializeGraphics(argv[0],windowWidth,windowWidth);
+		InitializeGraphics("galsim", windowWidth, windowWidth);
 		SetCAxes(0,1);
 	}
 
