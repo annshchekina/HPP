@@ -41,9 +41,9 @@ void calculation(star* stars, star* stars_buffer, int N_stars, double delta_t) {
 			// printf("rx: %lf\n, Fx: %lf\n\n", rx, Fx);
 		}		
 		stars_buffer[i].vx = stars[i].vx + delta_t*Fx;	
-		stars_buffer[i].x = stars[i].x + delta_t*stars[i].vx;
+		stars_buffer[i].x = stars[i].x + delta_t*stars_buffer[i].vx;
 		stars_buffer[i].vy = stars[i].vy + delta_t*Fy;
-		stars_buffer[i].y = stars[i].y + delta_t*stars[i].vy;
+		stars_buffer[i].y = stars[i].y + delta_t*stars_buffer[i].vy;
 		// mass does not change
 		// printf("Fx: %lf\nFy: %lf\n\n", Fx, Fy);
 		// printf("star[%d] after\nx: %lf\ny: %lf\nm: %lf\nvx: %lf\nvy: %lf\n\n", i, stars[i].x, stars[i].y, stars[i].m, stars[i].vx, stars[i].vy);
