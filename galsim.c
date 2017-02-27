@@ -3,40 +3,60 @@
 #include <math.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/time.h>
 #include "galsim.h"
 #include "file_operations/file_operations.h"
 #include "graphics/graphics.h"
 
-#define PERF_TEST	1
+#define PERF_TEST_ORD	0
 
 const float circleRadius=0.0025, circleColor=0;
 const int windowWidth=800;	
 
-// calculate the next position and velocity
-void calculation(star* stars, star* stars_buffer, int N_stars, double delta_t) { 	
+double t_non_rep = 0, t_calc_calc = 0, t_calc_other = 0, 
+	t_calc_calc_part, t_start, t_start1, t_m_start;
+// assume no graphics
+
+double get_wall_seconds()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	double seconds = tv.tv_sec + (double)tv.tv_usec/1e6;
+		
+	return seconds;
+}
+
+void calculation(star* stars, star* stars_buffer, int N_stars, double delta_t) { 
+	t_start = get_wall_seconds();
 	const double G = 100./N_stars;	
 	const double e = 0.001;
 	
+	t_calc_calc_part = 0;
 	for (int i = 0; i < N_stars; i++) {			
-		double rx = 0;	
-		double ry = 0;
-		double length_r = 0;
-		double Fx = 0;
-		double Fy = 0;
+		double Fx = 0, Fy = 0;
+		t_start1 = get_wall_seconds();
+		double star_x = stars[i].x, star_y = stars[i].y;
 		for (int j = 0; j < N_stars; j++) {
 			if (j == i) continue;
-			rx = stars[i].x - stars[j].x;
-			ry = stars[i].y - stars[j].y;				
-			length_r = sqrt(rx*rx+ry*ry);
-			Fx -= G*((stars[j].m * rx)/((length_r+e)*(length_r+e)*(length_r+e)));				
-			Fy -= G*((stars[j].m * ry)/((length_r+e)*(length_r+e)*(length_r+e)));
-		}		
-		stars_buffer[i].vx = stars[i].vx + delta_t*Fx;	
-		stars_buffer[i].x = stars[i].x + delta_t*stars_buffer[i].vx;
-		stars_buffer[i].vy = stars[i].vy + delta_t*Fy;
-		stars_buffer[i].y = stars[i].y + delta_t*stars_buffer[i].vy;
+			double rx = star_x - stars[j].x;
+			double ry = star_y - stars[j].y;				
+			double length_r_e = sqrt(rx * rx + ry * ry) + e;
+			// cube can be calculated once
+			// i indexed can be loaded once and *
+			double mult = stars[j].m / (length_r_e * length_r_e * length_r_e);
+			Fx += mult * rx;				
+			Fy += mult * ry;
+		}
+		Fx *= -G;
+		Fy *= -G;
+		t_calc_calc_part += get_wall_seconds() - t_start1;
+		stars_buffer[i].vx = stars[i].vx + delta_t * Fx;	
+		stars_buffer[i].x = stars[i].x + delta_t * stars_buffer[i].vx;
+		stars_buffer[i].vy = stars[i].vy + delta_t * Fy;
+		stars_buffer[i].y = stars[i].y + delta_t * stars_buffer[i].vy;
 		// mass does not change
 	}
+	t_calc_calc += t_calc_calc_part;
 	// sync buffers
 	for (int i = 0; i < N_stars; i++) {	
 		stars[i].vx = stars_buffer[i].vx;
@@ -44,13 +64,7 @@ void calculation(star* stars, star* stars_buffer, int N_stars, double delta_t) {
 		stars[i].vy = stars_buffer[i].vy;
 		stars[i].y = stars_buffer[i].y;
 	}	
-}
-
-void keep_within_box(float* xA, float* yA) {	
-	if(*xA > 1)
-	*xA = 0;
-	if(*yA > 1)
-	*yA = 0;
+	t_calc_other = get_wall_seconds() - t_start - t_calc_calc_part;
 }
 
 void galsim(int N, char * filename, int nsteps, double delta_t, int graphics) {
@@ -102,9 +116,10 @@ void galsim(int N, char * filename, int nsteps, double delta_t, int graphics) {
 	free(buffer);
 }
 
-#if !PERF_TEST
+#if !PERF_TEST_ORD
 int main(int argc, char **argv)
 {
+		
 	if (argc < 6) {	
 			printf("Give 5 input args: \'N filename nsteps delta_t graphics\'\n");
 			exit(1);
@@ -116,7 +131,17 @@ int main(int argc, char **argv)
 	double delta_t = atof(argv[4]);	
 	int graphics = strtol(argv[5], NULL, 10);	
 	
+	FILE *output;
+	char out_file_name[64];
+	sprintf(out_file_name, "time_cons_parts_opt_denom_%d.txt", N);	
+	output = fopen(out_file_name, "w");
+	
+	t_m_start = get_wall_seconds();	
 	galsim(N, filename, nsteps, delta_t, graphics);
+	
+	t_non_rep = get_wall_seconds() - t_m_start - t_calc_calc - t_calc_other;
+	fprintf(output, "Overall time: %lf\nCalculation: %lf\nStores: %lf\n", t_non_rep, t_calc_calc, t_calc_other);	
+	fclose(output);
 	
 	return 0;
 }
