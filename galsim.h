@@ -6,8 +6,10 @@ typedef struct {
 	double vy;
 } star;
 
-void calculation(star* stars, star* stars_buffer, int N_stars, double delta_t);
+double get_wall_seconds();
 
-void keep_within_box(float* xA, float* yA);
+void calculation(star * __restrict stars, star * __restrict stars_buffer, 
+	const int N_stars, const double delta_t);
 
-void galsim(int N, char * filename, int nsteps, double delta_t, int graphics);
+void galsim(const int N, const char * filename, 
+	const int nsteps, const double delta_t, const int graphics);
